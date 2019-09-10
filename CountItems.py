@@ -17,8 +17,8 @@ width = 0
 height = 0
 EnterCounter = 0
 ExitCounter = 0
-AreaBorderMinLimit = 100  #Change these values according to your needs. 
-BinarizationThreshold = 90  #Change these values according to your needs.
+AreaBorderMinLimit = 2000  #Change these values according to your needs. 
+BinarizationThreshold = 70  #Change these values according to your needs.
 LineOffset = 120  #Change these values according to your needs.
 timeout = time.time() + 60*1  # 1 minute from now, the program will shutdown, for testing purposes or else.
 
@@ -160,34 +160,34 @@ f.close()
 #The following code allows you to send the file to an email address, if not needed just delete or comment it.
 #Good thing there is a built in library for this already, so why not make use of it =D.
 
-fromaddr = "bhad1434@pacificu.edu" #Your Email Address
-toaddr = "sbhadra1@steelcase.com" #Address to receive email
+#fromaddr = "bhad1434@pacificu.edu" #Your Email Address
+#toaddr = "sbhadra1@steelcase.com" #Address to receive email
  
-msg = MIMEMultipart()
+#msg = MIMEMultipart()
  
-msg['From'] = fromaddr
-msg['To'] = toaddr
-msg['Subject'] = "Item Count" #Subject of the email goes here
+#msg['From'] = fromaddr
+#msg['To'] = toaddr
+#msg['Subject'] = "Item Count" #Subject of the email goes here
  
-body = "How many items entered in the last session." #Message to be written on the email
+#body = "How many items entered in the last session." #Message to be written on the email
  
-msg.attach(MIMEText(body, 'plain'))
+#msg.attach(MIMEText(body, 'plain'))
  
-filename = "Count.txt" #File name with extension to send as an attatchment.
-attachment = open("/home/pi/Count.txt", "rb") #File path
+#filename = "Count.txt" #File name with extension to send as an attatchment.
+#attachment = open("/home/pi/Count.txt", "rb") #File path
  
-part = MIMEBase('application', 'octet-stream')
-part.set_payload((attachment).read())
-encoders.encode_base64(part)
-part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+#part = MIMEBase('application', 'octet-stream')
+#part.set_payload((attachment).read())
+#encoders.encode_base64(part)
+#part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
  
-msg.attach(part)
+#msg.attach(part)
  
-server = smtplib.SMTP('smtp.gmail.com', 587)
-server.starttls()
-server.login(fromaddr, "AnandaSchool001") #Your password goes here, substitute xxxx for it.
-text = msg.as_string()
-server.sendmail(fromaddr, toaddr, text)
-server.quit()
+#server = smtplib.SMTP('smtp.gmail.com', 587)
+#server.starttls()
+#server.login(fromaddr, "Password") #Your password goes here, substitute xxxx for it.
+#text = msg.as_string()
+#server.sendmail(fromaddr, toaddr, text)
+#server.quit()
 cv2.destroyAllWindows()
 camera.stop()
