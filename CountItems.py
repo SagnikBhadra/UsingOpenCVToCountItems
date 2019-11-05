@@ -11,21 +11,23 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+import sqlite3
 
 #global variables
 width = 0
 height = 0
 EnterCounter = 0
 ExitCounter = 0
-AreaBorderMinLimit = 2000  #Change these values according to your needs. 
+AreaBorderMinLimit = 2000  #Change these values according to your needs.
 BinarizationThreshold = 70  #Change these values according to your needs.
 LineOffset = 120  #Change these values according to your needs.
-timeout = time.time() + 60*1  # 1 minute from now, the program will shutdown, for testing purposes or else.
-
+#timeout = time.time() + 60*1  # 1 minute from now, the program will shutdown, for testing purposes or else.
+conn = sqlite3.connect('Count.db')
+curr = conn.cursor()
 
 #Verifying if the object is entering the monitored zone.
 def CheckEntrance(y, EnterLineYCoordinate, ExitLineYCoordinate):
-        AbsoluteDifference = abs(y - EnterLineYCoordinate)    
+        AbsoluteDifference = abs(y - EnterLineYCoordinate)
 
         if ((AbsoluteDifference <= 2) and (y < ExitLineYCoordinate)):
                 return 1
@@ -34,7 +36,7 @@ def CheckEntrance(y, EnterLineYCoordinate, ExitLineYCoordinate):
 
 #Verifying if the object is leaving the monitored zone.
 def CheckExit(y, EnterLineYCoordinate, ExitLineYCoordinate):
-        AbsoluteDifference = abs(y - ExitLineYCoordinate)  
+        AbsoluteDifference = abs(y - ExitLineYCoordinate)
 
         if ((AbsoluteDifference <= 2) and (y > EnterLineYCoordinate)):
                 return 1
@@ -78,7 +80,7 @@ while True:
     #Also makes the binarization of the frame and the subtracted background.
     FrameDelta = cv2.absdiff(FirstFrame, FrameGray)
     FrameThresh = cv2.threshold(FrameDelta, BinarizationThreshold, 255, cv2.THRESH_BINARY)[1]
-    
+
     #Makes the dilatation of the binarized frame to eliminate holes, white zones inside the found shapes,
     #this way, detected objects will be considered a black mass, also finds the shapes after dilatation.
     FrameThresh = cv2.dilate(FrameThresh, None, iterations=2)
@@ -86,7 +88,7 @@ while True:
 
     NumContours = 0
 
-    #Drawing reference lines 
+    #Drawing reference lines
     EnterLineYCoordinate = (height / 2)-LineOffset
     ExitLineYCoordinate = (height / 2)+LineOffset
     cv2.line(Frame, (0,int(EnterLineYCoordinate)), (width,int(EnterLineYCoordinate)), (255, 0, 0), 2)
@@ -99,26 +101,26 @@ while True:
         if cv2.contourArea(c) < AreaBorderMinLimit:
             continue
         #For debugging purposes, counts the number of found shapes
-        NumContours = NumContours+1    
-        
+        NumContours = NumContours+1
+
         #Gets the shapes coordinates (A rectangle that involves the object), highlighting it's shape.
         (x, y, w, h) = cv2.boundingRect(c) #x e y: coordenadas do vertice superior esquerdo
                                            #w e h: respectivamente largura e altura do retangulo
 
         cv2.rectangle(Frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        
+
         #Determines the central point of the shape, and circles it.
         XCoordinateOfCenterOfContour = (x+x+w)/2
         YCoordinateOfCenterOfContour = (y+y+h)/2
         CenterOfContour = (math.floor(XCoordinateOfCenterOfContour),math.floor(YCoordinateOfCenterOfContour))
         cv2.circle(Frame, CenterOfContour, 1, (0, 0, 0), 5)
-        
-        #Tests the intersection of centers from the shapes and the reference lines. This way, it may count 
+
+        #Tests the intersection of centers from the shapes and the reference lines. This way, it may count
         #which shapes crosses the reference lines.
         if (CheckEntrance(YCoordinateOfCenterOfContour,EnterLineYCoordinate,ExitLineYCoordinate)):
             EnterCounter += 1
 
-        if (CheckExit(YCoordinateOfCenterOfContour,EnterLineYCoordinate,ExitLineYCoordinate)):  
+        if (CheckExit(YCoordinateOfCenterOfContour,EnterLineYCoordinate,ExitLineYCoordinate)):
             ExitCounter += 1
 
         #If needed, uncomment these lines to show framerate.
@@ -139,15 +141,15 @@ while True:
     key = cv2.waitKey(1) & 0xFF
 
     #If you want to exit the program from a keystroke, uncomment these lines and comment the next ones,
-    #which makes the program exit by itself after a certain ammount of time.    
+    #which makes the program exit by itself after a certain ammount of time.
     # if the `q` key was pressed, break from the loop
     #if key == ord("q"):
         #break
 
-    test = 0
-    if test == 5 or time.time() > timeout:
-        break
-    test = test - 1
+    # test = 0
+    # if test == 5 or time.time() > timeout:
+    #     break
+    # test = test - 1
 
 # cleanup the camera and close any open windows
 
@@ -162,27 +164,27 @@ f.close()
 
 #fromaddr = "bhad1434@pacificu.edu" #Your Email Address
 #toaddr = "sbhadra1@steelcase.com" #Address to receive email
- 
+
 #msg = MIMEMultipart()
- 
+
 #msg['From'] = fromaddr
 #msg['To'] = toaddr
 #msg['Subject'] = "Item Count" #Subject of the email goes here
- 
+
 #body = "How many items entered in the last session." #Message to be written on the email
- 
+
 #msg.attach(MIMEText(body, 'plain'))
- 
+
 #filename = "Count.txt" #File name with extension to send as an attatchment.
 #attachment = open("/home/pi/Count.txt", "rb") #File path
- 
+
 #part = MIMEBase('application', 'octet-stream')
 #part.set_payload((attachment).read())
 #encoders.encode_base64(part)
 #part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
- 
+
 #msg.attach(part)
- 
+
 #server = smtplib.SMTP('smtp.gmail.com', 587)
 #server.starttls()
 #server.login(fromaddr, "Password") #Your password goes here, substitute xxxx for it.
@@ -191,3 +193,5 @@ f.close()
 #server.quit()
 cv2.destroyAllWindows()
 camera.stop()
+conn.commit()
+conn.close()
